@@ -45,7 +45,7 @@ public static class ConsoleRenderer
     public static void DrawColourString(int x, int y, string s, string hex)
     {
         if (hex.StartsWith("#")) hex = hex.Substring(1);
-        if (hex.Length != 6) return; //NTS: Throws an error at 7?
+        if (hex.Length != 7) return; //NTS: Throws an error at 6? But it should be 6 because the string is getting subbed from the #
 
         int r = Convert.ToInt32((hex.Substring(0, 2), 16));
         int g = Convert.ToInt32((hex.Substring(0, 2), 16));
