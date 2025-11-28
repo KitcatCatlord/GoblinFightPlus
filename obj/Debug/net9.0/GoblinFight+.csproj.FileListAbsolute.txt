@@ -12,3 +12,4 @@
 /Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.pdb
 /Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.genruntimeconfig.cache
 /Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/ref/GoblinFight+.dll
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.sourcelink.json

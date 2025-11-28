@@ -11,7 +11,7 @@ public static class ConsoleRenderer
         Console.OutputEncoding = Encoding.UTF8;
         Console.CursorVisible = false;
 
-        width = Console.WindowWidth;
+        width = Console.WindowWidth - 2;
         height = Console.WindowHeight;
 
         if (OperatingSystem.IsWindows()) Console.SetBufferSize(width, height);
@@ -45,26 +45,49 @@ public static class ConsoleRenderer
     public static void DrawColourString(int x, int y, string s, string hex)
     {
         if (hex.StartsWith("#")) hex = hex.Substring(1);
-        if (hex.Length != 7) return; //NTS: Throws an error at 6? But it should be 6 because the string is getting subbed from the #
+        if (hex.Length != 6) return;
 
-        int r = Convert.ToInt32((hex.Substring(0, 2), 16));
-        int g = Convert.ToInt32((hex.Substring(0, 2), 16));
-        int b = Convert.ToInt32((hex.Substring(0, 2), 16));
+        int r = Convert.ToInt32(hex.Substring(0, 2), 16);
+        int g = Convert.ToInt32(hex.Substring(2, 2), 16);
+        int b = Convert.ToInt32(hex.Substring(4, 2), 16);
 
         Console.SetCursorPosition(x, y);
-        Console.Write($"\u001b[38;2;{r};{g};{b}m{s}\u001b[0m]]"); //TODO: Test this!!!!!!!
+        Console.Write($"\u001b[38;2;{r};{g};{b}m{s}\u001b[0m");
+        Console.SetCursorPosition(0, 0);
     }
-    public static void Render(char[,] buffer) {
-      Console.SetCursorPosition(0,0);
-      var sb = new StringBuilder(width * height);
+    public static void DrawColourStringBG(int x, int y, string s, string fgHex, string bgHex)
+    {
+        if (fgHex.StartsWith("#")) fgHex = fgHex.Substring(1);
+        if (bgHex.StartsWith("#")) bgHex = bgHex.Substring(1);
+        if (fgHex.Length != 6 || bgHex.Length != 6) return;
 
-      for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-          sb.Append(buffer[y,x]);
+        int fr = Convert.ToInt32(fgHex.Substring(0, 2), 16);
+        int fg = Convert.ToInt32(fgHex.Substring(2, 2), 16);
+        int fb = Convert.ToInt32(fgHex.Substring(4, 2), 16);
+
+        int br = Convert.ToInt32(bgHex.Substring(0, 2), 16);
+        int bg = Convert.ToInt32(bgHex.Substring(2, 2), 16);
+        int bb = Convert.ToInt32(bgHex.Substring(4, 2), 16);
+
+        Console.SetCursorPosition(x, y);
+        Console.Write($"\u001b[48;2;{br};{bg};{bb}m\u001b[38;2;{fr};{fg};{fb}m{s}\u001b[0m");
+        Console.SetCursorPosition(0, 0);
+    }
+
+    public static void Render(char[,] buffer)
+    {
+        Console.SetCursorPosition(0, 0);
+        var sb = new StringBuilder(width * height);
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                sb.Append(buffer[y, x]);
+            }
+            if (y < height - 1) sb.Append('\n');
         }
-        if (y < height - 1) sb.Append('\n');
-      }
 
-      Console.Write(sb.ToString());
+        Console.Write(sb.ToString());
     }
 }
