@@ -38,7 +38,7 @@ class Program
         {
             sw.Start();
 
-            hue += 0.5;
+            hue += 0.01;
             if (hue >= 360) hue = 0;
             var (r, g, b) = HueToRgb(hue);
             string hex = $"{r:X2}{g:X2}{b:X2}";
@@ -49,18 +49,18 @@ class Program
             ConsoleRenderer.DrawString(buffer, 2, 4, $"FPS: " + fps.ToString("0"));
             ConsoleRenderer.DrawString(buffer, 2, 6, $"Time: {t}");
 
-            ConsoleRenderer.DrawString(buffer, 2, 8, "              ");
-            ConsoleRenderer.DrawString(buffer, 2, 9, "       ");
-
             for (int i = 0; i < 20; i++)
             {
                 ConsoleRenderer.DrawChar(buffer, 10 + i, 10, '#');
             }
 
-            ConsoleRenderer.Render(buffer);
+            var overlays = new (int x, int y, string text, string fgHex, string bgHex)[]
+            {
+                (2, 8, "Coloured test", hex, ""),
+                (2, 9, "BG test", "#FFFFFF", hex)
+            };
 
-            ConsoleRenderer.DrawColourString(2, 8, "Coloured test", hex);
-            ConsoleRenderer.DrawColourStringBG(2, 9, "BG test", "#FFFFFF", hex);
+            ConsoleRenderer.Render(buffer, overlays);
 
             frames++;
             long now = sw.ElapsedMilliseconds;
