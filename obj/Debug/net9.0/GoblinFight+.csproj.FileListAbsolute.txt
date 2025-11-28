@@ -1,0 +1,14 @@
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.GeneratedMSBuildEditorConfig.editorconfig
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.AssemblyInfoInputs.cache
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.AssemblyInfo.cs
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.csproj.CoreCompileInputs.cache
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/bin/Debug/net9.0/GoblinFight+
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/bin/Debug/net9.0/GoblinFight+.deps.json
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/bin/Debug/net9.0/GoblinFight+.runtimeconfig.json
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/bin/Debug/net9.0/GoblinFight+.dll
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/bin/Debug/net9.0/GoblinFight+.pdb
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.dll
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/refint/GoblinFight+.dll
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.pdb
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/GoblinFight+.genruntimeconfig.cache
+/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/Debug/net9.0/ref/GoblinFight+.dll
