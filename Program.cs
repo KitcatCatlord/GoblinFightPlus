@@ -28,7 +28,7 @@ class Program
 
         ConsoleRenderer.Render(buffer);
 
-        ConsoleRenderer.DrawColourString(2, 8, "Coloured test", "#FF00AA");
+        // ConsoleRenderer.DrawColourString(2, 8, "Coloured test", "#FF00AA");
 
         frames++;
         long now = sw.ElapsedMilliseconds;
