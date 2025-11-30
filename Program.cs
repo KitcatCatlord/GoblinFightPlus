@@ -1,77 +1,91 @@
-﻿using System.Diagnostics;
 namespace GoblinFight_;
 
+/* Hero plan:
+ * You start with base health, strength and skill.
+ * You can train before you enter the 'dungeon' to increase your strength, but that also gives the enemies time to train so they get a bit stronger.
+ *  I can take this mechanic from my other program and just retrofit it here.
+ * Then when you enter, the damage you do is your strength * skill + weapon damage rounded to nearest int.
+ * You have an inventory of weapons and can select one to use as your main.
+ *  Maybe different weapons have different dps?
+ */
+
+struct item
+{
+    public string name;
+    public int damage;
+    public double cooldown; // seconds
+    public int weight;
+}
+class itemDatabase
+{
+    public static item goblinsArm = new item {
+        name = "Goblin's Arm",
+        damage = 3,
+        cooldown = 0.5,
+        weight = 4
+    };
+    public static item Sword = new item {
+        name = "Sword",
+        damage = 10,
+        cooldown = 0.8,
+        weight = 8
+    };
+    public static item Axe = new item {
+        name = "Axe",
+        damage = 15,
+        cooldown = 1.5,
+        weight = 8
+    };
+}
+class Hero
+{
+    private int _health = 100;
+    private double _strength = 5;
+    private int _skill = 1;
+    private double _carryWeight = 0;
+
+    static item Fist = new item { name = "Fist", damage = 2, cooldown = 0.5, weight = 0 };
+    private item _equippedItem = Fist;
+    private List<item> _inventory = new List<item>();
+
+    public void updateCarryWeight()
+    {
+        _carryWeight = _strength * 10;
+    }
+
+    public bool Damage(int attackDamage)
+    {
+        _health = -attackDamage;
+        if (_health <= 0)
+        {
+            _health = 0;
+            return true;
+        }
+        return false;
+    }
+    public List<item> ListInventory() => _inventory;
+    public item? GetItem(int index)
+    {
+        if (index >= 0 && index < _inventory.Count) return _inventory[index];
+        return null;
+    }
+    public object? ListInventory(int index = -1)
+    {
+        if (index == -1)
+            return _inventory;
+
+        if (index >= 0 && index < _inventory.Count)
+        {
+            return _inventory[index];
+        }
+        return null;
+    }
+}
 class Program
 {
-    static (int r, int g, int b) HueToRgb(double hue)
-    {
-        hue = hue % 360;
-        double c = 1;
-        double x = 1 - Math.Abs((hue / 60) % 2 - 1);
-
-        double r = 0, g = 0, b = 0;
-
-        if (hue < 60) { r = c; g = x; b = 0; }
-        else if (hue < 120) { r = x; g = c; b = 0; }
-        else if (hue < 180) { r = 0; g = c; b = x; }
-        else if (hue < 240) { r = 0; g = x; b = c; }
-        else if (hue < 300) { r = x; g = 0; b = c; }
-        else { r = c; g = 0; b = x; }
-
-        return ((int)(r * 255), (int)(g * 255), (int)(b * 255));
-    }
 
     static void Main(string[] args)
     {
-        double hue = 0;
-        ConsoleRenderer.Init();
-
-        var buffer = ConsoleRenderer.CreateBuffer();
-        int t = 0;
-
-        var sw = new Stopwatch();
-        int frames = 0;
-        double fps = 0;
-        long lastTime = 0;
-
-        while (true)
-        {
-            sw.Start();
-
-            hue += 0.01;
-            if (hue >= 360) hue = 0;
-            var (r, g, b) = HueToRgb(hue);
-            string hex = $"{r:X2}{g:X2}{b:X2}";
-
-            ConsoleRenderer.clearBuffer(buffer);
-
-            ConsoleRenderer.DrawString(buffer, 2, 2, "Fast console testing...");
-            ConsoleRenderer.DrawString(buffer, 2, 4, $"FPS: " + fps.ToString("0"));
-            ConsoleRenderer.DrawString(buffer, 2, 6, $"Time: {t}");
-
-            for (int i = 0; i < 20; i++)
-            {
-                ConsoleRenderer.DrawChar(buffer, 10 + i, 10, '#');
-            }
-
-            var overlays = new (int x, int y, string text, string fgHex, string bgHex)[]
-            {
-                (2, 8, "Coloured test", hex, ""),
-                (2, 9, "BG test", "#FFFFFF", hex)
-            };
-
-            ConsoleRenderer.Render(buffer, overlays);
-
-            frames++;
-            long now = sw.ElapsedMilliseconds;
-            if (now - lastTime >= 1000)
-            {
-                fps = frames * 1000.0 / (now - lastTime);
-                frames = 0;
-                lastTime = now;
-            }
-
-            t++;
-        }
+        Console.WriteLine("Hello, world!");
     }
 }
