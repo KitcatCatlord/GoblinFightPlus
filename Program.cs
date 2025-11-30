@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace GoblinFight_;
 
 /* Hero plan:
@@ -13,13 +16,23 @@ namespace GoblinFight_;
  * Later, maybe add weapon qualities? So good quality would do more damage or attack faster for example.
  */
 
+enum ItemQuality
+{
+    Common,
+    Uncommon,
+    Rare,
+    Epic
+}
+
 struct Item
 {
     public string name;
     public int damage;
     public double cooldown; // seconds
     public int weight;
+    public int quality;
 }
+
 class ItemDatabase
 {
     public static Item goblinsArm = new Item
@@ -58,18 +71,64 @@ class ItemDatabase
         weight = 0
     };
 }
+
+static class ItemFactory
+{
+    public static Item MakeWithQuality(Item template, int quality)
+    {
+        if (quality < 0) quality = 0;
+        if (quality > 3) quality = 3;
+
+        Item item = template;
+        item.quality = quality;
+
+        double mult = 1.0 + 0.25 * quality;
+        item.damage = (int)Math.Round(template.damage * mult);
+
+        double speedMult = 1.0 - 0.1 * quality;
+        if (speedMult < 0.5) speedMult = 0.5;
+        item.cooldown = template.cooldown * speedMult;
+
+        string qName = QualityName(quality);
+        if (qName != "") item.name = qName + " " + template.name;
+        else item.name = template.name;
+
+        return item;
+    }
+
+    public static Item MakeRandomQuality(Item template)
+    {
+        int roll = RNG.Next(0, 100);
+        int q;
+        if (roll < 5) q = 3;
+        else if (roll < 20) q = 2;
+        else if (roll < 50) q = 1;
+        else q = 0;
+        return MakeWithQuality(template, q);
+    }
+
+    static string QualityName(int quality)
+    {
+        if (quality == 1) return "Fine";
+        if (quality == 2) return "Rare";
+        if (quality == 3) return "Legendary";
+        return "";
+    }
+}
+
 class Hero
 {
     private int _health = 100;
     private double _strength = 5;
     private int _skill = 1;
     private double _carryWeight = 0;
-    public int X;
-    public int Y;
 
     static Item Fist = new Item { name = "Fist", damage = 2, cooldown = 0.5, weight = 0 };
     private Item _equippedItem = Fist;
     private List<Item> _inventory = new List<Item>();
+
+    public int X;
+    public int Y;
 
     public void UpdateCarryWeight()
     {
@@ -140,7 +199,7 @@ class Hero
     }
     public virtual int GetAttackDamage()
     {
-        double raw = _strength * _skill;
+        double raw = _strength * _skill + _equippedItem.damage;
         return (int)Math.Round(raw);
     }
     public int Health => _health;
@@ -148,6 +207,7 @@ class Hero
     public int Skill => _skill;
     public Item EquippedItem => _equippedItem;
 }
+
 abstract class Monster
 {
     protected int _health;
@@ -157,14 +217,16 @@ abstract class Monster
     protected Item[] _possibleWeapons;
     public int X;
     public int Y;
+
     public Monster(int health, int strength, int skill, Item[] possibleWeapons)
     {
         _health = health;
         _strength = strength;
         _skill = skill;
         _possibleWeapons = possibleWeapons;
-        var rnd = new Random();
-        _equippedItem = possibleWeapons[rnd.Next(possibleWeapons.Length)];
+        int idx = RNG.Next(0, _possibleWeapons.Length);
+        Item template = _possibleWeapons[idx];
+        _equippedItem = ItemFactory.MakeRandomQuality(template);
     }
     public bool Damage(int attackDamage)
     {
@@ -185,11 +247,14 @@ abstract class Monster
         double raw = _strength * _skill + _equippedItem.damage;
         return (int)Math.Round(raw);
     }
-    public Item GetWeaponDrop()
+    public Item? GetWeaponDrop()
     {
-        return _equippedItem;
+        int roll = RNG.Next(0, 100);
+        if (roll < 25) return _equippedItem;
+        return null;
     }
 }
+
 class Goblin : Monster
 {
     public Goblin() : base(
@@ -201,7 +266,8 @@ class Goblin : Monster
             ItemDatabase.Bow
         }
     )
-    { }
+    {
+    }
 }
 class Orc : Monster
 {
@@ -215,7 +281,8 @@ class Orc : Monster
             ItemDatabase.Bow
         }
     )
-    { }
+    {
+    }
 }
 class Dragon : Monster
 {
@@ -227,12 +294,17 @@ class Dragon : Monster
             ItemDatabase.FireBreath
         }
     )
-    { }
+    {
+    }
 }
+
 class Program
 {
     static void Main(string[] args)
     {
+        ConsoleRenderer.Init();
+        var buffer = ConsoleRenderer.CreateBuffer();
+
         Hero hero = new Hero();
         hero.UpdateCarryWeight();
 
@@ -245,7 +317,6 @@ class Program
             hero.Y = startMap.stairsDownY;
         }
 
-        MovementSystem.Run(hero, dungeon);
-
+        MovementSystem.Run(hero, dungeon, buffer);
     }
 }
