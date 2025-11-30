@@ -8,9 +8,9 @@ namespace GoblinFight_;
  * You have an inventory of weapons and can select one to use as your main.
  *  Maybe different weapons have different dps?
  *
- *  I'll add training later, it's too much work for one night...
- *
- *  Maybe issue with carryweight if you've equipped an item that's too heavy?
+ * I'll add training later, it's too much work for one night...
+ *  
+ * Later, maybe add weapon qualities? So good quality would do more damage or attack faster for example.
  */
 
 struct Item
@@ -64,6 +64,8 @@ class Hero
     private double _strength = 5;
     private int _skill = 1;
     private double _carryWeight = 0;
+    public int X;
+    public int Y;
 
     static Item Fist = new Item { name = "Fist", damage = 2, cooldown = 0.5, weight = 0 };
     private Item _equippedItem = Fist;
@@ -153,6 +155,8 @@ abstract class Monster
     protected int _skill;
     protected Item _equippedItem;
     protected Item[] _possibleWeapons;
+    public int X;
+    public int Y;
     public Monster(int health, int strength, int skill, Item[] possibleWeapons)
     {
         _health = health;
@@ -197,8 +201,7 @@ class Goblin : Monster
             ItemDatabase.Bow
         }
     )
-    {
-    }
+    { }
 }
 class Orc : Monster
 {
@@ -212,8 +215,7 @@ class Orc : Monster
             ItemDatabase.Bow
         }
     )
-    {
-    }
+    { }
 }
 class Dragon : Monster
 {
@@ -225,14 +227,25 @@ class Dragon : Monster
             ItemDatabase.FireBreath
         }
     )
-    {
-    }
+    { }
 }
 class Program
 {
-
     static void Main(string[] args)
     {
-        Console.WriteLine("Hello, world!");
+        Hero hero = new Hero();
+        hero.UpdateCarryWeight();
+
+        Dungeon dungeon = DungeonGenerator.CreateSimpleDungeon(5, 40, 20);
+
+        Map startMap = dungeon.CurrentMap();
+        if (startMap.stairsDownX >= 0 && startMap.stairsDownY >= 0)
+        {
+            hero.X = startMap.stairsDownX;
+            hero.Y = startMap.stairsDownY;
+        }
+
+        MovementSystem.Run(hero, dungeon);
+
     }
 }
