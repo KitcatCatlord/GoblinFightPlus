@@ -15,20 +15,15 @@ static class MovementSystem
         int frames = 0;
         double fps = 0;
         long lastTime = 0;
-        long lastMonsterStep = 0;
-        int monsterStepMs = 200;
+        long lastHeroAttackMs = 0;
 
         while (true)
         {
             long now = sw.ElapsedMilliseconds;
 
-            HandleInput(hero, dungeon);
+            HandleInput(hero, dungeon, now, ref lastHeroAttackMs);
 
-            if (now - lastMonsterStep >= monsterStepMs)
-            {
-                UpdateMonsters(hero, dungeon);
-                lastMonsterStep = now;
-            }
+            UpdateMonsters(hero, dungeon, now);
 
             ConsoleRenderer.clearBuffer(buffer);
             RenderGame(hero, dungeon, buffer, fps);
@@ -44,7 +39,7 @@ static class MovementSystem
         }
     }
 
-    static void HandleInput(Hero hero, Dungeon dungeon)
+    static void HandleInput(Hero hero, Dungeon dungeon, long nowMs, ref long lastHeroAttackMs)
     {
         while (Console.KeyAvailable)
         {
@@ -65,12 +60,16 @@ static class MovementSystem
 
             if (dx != 0 || dy != 0)
             {
-                TryMoveHero(hero, dungeon, dx, dy);
+                TryMoveHero(hero, dungeon, dx, dy, nowMs, ref lastHeroAttackMs);
+            }
+            else if (key == ConsoleKey.Spacebar)
+            {
+                TryHeroAttackAdjacent(hero, dungeon, nowMs, ref lastHeroAttackMs);
             }
         }
     }
 
-    static void TryMoveHero(Hero hero, Dungeon dungeon, int dx, int dy)
+    static void TryMoveHero(Hero hero, Dungeon dungeon, int dx, int dy, long nowMs, ref long lastHeroAttackMs)
     {
         Map map = dungeon.CurrentMap();
 
@@ -82,8 +81,7 @@ static class MovementSystem
         int mi = IndexOfMonsterAt(map, nx, ny);
         if (mi >= 0)
         {
-            Monster m = map.monsters[mi];
-            CombatSystem.HeroAttack(hero, m, map);
+            TryHeroAttackOnMonsterIndex(hero, map, mi, nowMs, ref lastHeroAttackMs);
             return;
         }
 
@@ -130,6 +128,41 @@ static class MovementSystem
         CollectLootAtPosition(hero, map);
     }
 
+    static void TryHeroAttackAdjacent(Hero hero, Dungeon dungeon, long nowMs, ref long lastHeroAttackMs)
+    {
+        Map map = dungeon.CurrentMap();
+
+        int[,] dirs = new int[4, 2] { { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } };
+
+        for (int i = 0; i < 4; i++)
+        {
+            int nx = hero.X + dirs[i, 0];
+            int ny = hero.Y + dirs[i, 1];
+            int mi = IndexOfMonsterAt(map, nx, ny);
+            if (mi >= 0)
+            {
+                TryHeroAttackOnMonsterIndex(hero, map, mi, nowMs, ref lastHeroAttackMs);
+                return;
+            }
+        }
+    }
+
+    static void TryHeroAttackOnMonsterIndex(Hero hero, Map map, int monsterIndex, long nowMs, ref long lastHeroAttackMs)
+    {
+        Item weapon = hero.EquippedItem;
+        double cdMsDouble = weapon.cooldown * 1000.0;
+        long cdMs = (long)cdMsDouble;
+        if (cdMs < 50) cdMs = 50;
+
+        if (nowMs - lastHeroAttackMs < cdMs) return;
+
+        lastHeroAttackMs = nowMs;
+
+        if (monsterIndex < 0 || monsterIndex >= map.monsters.Count) return;
+        Monster m = map.monsters[monsterIndex];
+        CombatSystem.HeroAttack(hero, m, map);
+    }
+
     static void CollectLootAtPosition(Hero hero, Map map)
     {
         for (int i = 0; i < map.loot.Count; i++)
@@ -156,7 +189,7 @@ static class MovementSystem
         return -1;
     }
 
-    static void UpdateMonsters(Hero hero, Dungeon dungeon)
+    static void UpdateMonsters(Hero hero, Dungeon dungeon, long nowMs)
     {
         Map map = dungeon.CurrentMap();
 
@@ -164,10 +197,13 @@ static class MovementSystem
         {
             Monster m = map.monsters[i];
 
+            if (nowMs - m.LastMoveTimeMs < m.MoveIntervalMs) continue;
+
             int dist = Math.Abs(m.X - hero.X) + Math.Abs(m.Y - hero.Y);
             if (dist <= 1)
             {
                 CombatSystem.MonsterAttack(hero, m);
+                m.LastMoveTimeMs = nowMs;
                 continue;
             }
 
@@ -181,6 +217,7 @@ static class MovementSystem
             if (stepX == hero.X && stepY == hero.Y)
             {
                 CombatSystem.MonsterAttack(hero, m);
+                m.LastMoveTimeMs = nowMs;
                 continue;
             }
 
@@ -191,6 +228,7 @@ static class MovementSystem
 
             m.X = stepX;
             m.Y = stepY;
+            m.LastMoveTimeMs = nowMs;
         }
     }
 

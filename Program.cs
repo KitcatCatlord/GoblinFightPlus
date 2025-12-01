@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace GoblinFight_;
 
 /* Hero plan:
@@ -215,15 +212,19 @@ abstract class Monster
     protected int _skill;
     protected Item _equippedItem;
     protected Item[] _possibleWeapons;
+    protected int _moveIntervalMs;
+    protected long _lastMoveTimeMs;
     public int X;
     public int Y;
 
-    public Monster(int health, int strength, int skill, Item[] possibleWeapons)
+    public Monster(int health, int strength, int skill, Item[] possibleWeapons, int moveIntervalMs)
     {
         _health = health;
         _strength = strength;
         _skill = skill;
         _possibleWeapons = possibleWeapons;
+        _moveIntervalMs = moveIntervalMs;
+        _lastMoveTimeMs = 0;
         int idx = RNG.Next(0, _possibleWeapons.Length);
         Item template = _possibleWeapons[idx];
         _equippedItem = ItemFactory.MakeRandomQuality(template);
@@ -242,6 +243,12 @@ abstract class Monster
     public int Strength => _strength;
     public int Skill => _skill;
     public Item EquippedWeapon => _equippedItem;
+    public int MoveIntervalMs => _moveIntervalMs;
+    public long LastMoveTimeMs
+    {
+        get => _lastMoveTimeMs;
+        set => _lastMoveTimeMs = value;
+    }
     public virtual int GetAttackDamage()
     {
         double raw = _strength * _skill + _equippedItem.damage;
@@ -264,11 +271,13 @@ class Goblin : Monster
         new Item[] {
             ItemDatabase.goblinsArm,
             ItemDatabase.Bow
-        }
+        },
+        250
     )
     {
     }
 }
+
 class Orc : Monster
 {
     public Orc() : base(
@@ -279,11 +288,13 @@ class Orc : Monster
             ItemDatabase.Sword,
             ItemDatabase.Axe,
             ItemDatabase.Bow
-        }
+        },
+        300
     )
     {
     }
 }
+
 class Dragon : Monster
 {
     public Dragon() : base(
@@ -292,7 +303,8 @@ class Dragon : Monster
         3,
         new Item[] {
             ItemDatabase.FireBreath
-        }
+        },
+        500
     )
     {
     }
@@ -311,11 +323,27 @@ class Program
         Dungeon dungeon = DungeonGenerator.CreateSimpleDungeon(5, 40, 20);
 
         Map startMap = dungeon.CurrentMap();
-        if (startMap.stairsDownX >= 0 && startMap.stairsDownY >= 0)
+
+        int spawnX = startMap.stairsDownX;
+        int spawnY = startMap.stairsDownY;
+
+        if (spawnX < 0 || spawnY < 0 || startMap.tiles[spawnY, spawnX] != Tile.Floor || startMap.isDoor[spawnY, spawnX])
         {
-            hero.X = startMap.stairsDownX;
-            hero.Y = startMap.stairsDownY;
+            while (true)
+            {
+                int x = RNG.Next(1, startMap.Width - 1);
+                int y = RNG.Next(1, startMap.Height - 1);
+                if (startMap.tiles[y, x] != Tile.Floor) continue;
+                if (startMap.isDoor[y, x]) continue;
+                if ((x == startMap.stairsDownX && y == startMap.stairsDownY) || (x == startMap.stairsUpX && y == startMap.stairsUpY) || (x == startMap.exitX && y == startMap.exitY)) continue;
+                spawnX = x;
+                spawnY = y;
+                break;
+            }
         }
+
+        hero.X = spawnX;
+        hero.Y = spawnY;
 
         MovementSystem.Run(hero, dungeon, buffer);
     }
