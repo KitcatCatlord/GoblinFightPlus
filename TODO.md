@@ -1,5 +1,10 @@
-[ ] Add start screen
-[ ] Add pause menu
-[ ] Add open inventory
-[ ] Add item pickup / drop
-[ ] Add item equip
+[x] Add start screen
+[x] Add pause menu
+[x] Add open inventory
+[x] Add item pickup / drop
+[x] Add item equip
+
+BRRRRRRR!!!!!!!
+
+[ ] 3D rendering
+brrr...rrrb
