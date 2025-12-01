@@ -115,7 +115,7 @@ static class ItemFactory
 
 class Hero
 {
-    private int _health = 100;
+    private int _health = 500;
     private double _strength = 5;
     private int _skill = 1;
     private double _carryWeight = 0;
@@ -214,6 +214,7 @@ abstract class Monster
     protected Item[] _possibleWeapons;
     protected int _moveIntervalMs;
     protected long _lastMoveTimeMs;
+    protected long _lastHitTimeMs;
     public int X;
     public int Y;
 
@@ -224,7 +225,8 @@ abstract class Monster
         _skill = skill;
         _possibleWeapons = possibleWeapons;
         _moveIntervalMs = moveIntervalMs;
-        _lastMoveTimeMs = 0;
+        _lastMoveTimeMs = RNG.Next(0, moveIntervalMs);
+        _lastHitTimeMs = -1000000;
         int idx = RNG.Next(0, _possibleWeapons.Length);
         Item template = _possibleWeapons[idx];
         _equippedItem = ItemFactory.MakeRandomQuality(template);
@@ -249,6 +251,11 @@ abstract class Monster
         get => _lastMoveTimeMs;
         set => _lastMoveTimeMs = value;
     }
+    public long LastHitTimeMs
+    {
+        get => _lastHitTimeMs;
+        set => _lastHitTimeMs = value;
+    }
     public virtual int GetAttackDamage()
     {
         double raw = _strength * _skill + _equippedItem.damage;
@@ -272,7 +279,7 @@ class Goblin : Monster
             ItemDatabase.goblinsArm,
             ItemDatabase.Bow
         },
-        250
+        600
     )
     {
     }
@@ -289,7 +296,7 @@ class Orc : Monster
             ItemDatabase.Axe,
             ItemDatabase.Bow
         },
-        300
+        1200
     )
     {
     }
@@ -304,7 +311,7 @@ class Dragon : Monster
         new Item[] {
             ItemDatabase.FireBreath
         },
-        500
+        2000
     )
     {
     }
@@ -344,6 +351,45 @@ class Program
 
         hero.X = spawnX;
         hero.Y = spawnY;
+
+        for (int i = 0; i < startMap.monsters.Count; i++)
+        {
+            Monster m = startMap.monsters[i];
+            if (m is Goblin)
+            {
+                int dist = Math.Abs(m.X - hero.X) + Math.Abs(m.Y - hero.Y);
+                if (dist < 5)
+                {
+                    while (true)
+                    {
+                        int x = RNG.Next(1, startMap.Width - 1);
+                        int y = RNG.Next(1, startMap.Height - 1);
+                        if (startMap.tiles[y, x] != Tile.Floor) continue;
+                        if (startMap.isDoor[y, x]) continue;
+                        int d2 = Math.Abs(x - hero.X) + Math.Abs(y - hero.Y);
+                        if (d2 < 5) continue;
+
+                        bool monsterHere = false;
+                        for (int j = 0; j < startMap.monsters.Count; j++)
+                        {
+                            if (j == i) continue;
+                            if (startMap.monsters[j].X == x && startMap.monsters[j].Y == y)
+                            {
+                                monsterHere = true;
+                                break;
+                            }
+                        }
+                        if (monsterHere) continue;
+
+                        if ((x == startMap.stairsDownX && y == startMap.stairsDownY) || (x == startMap.stairsUpX && y == startMap.stairsUpY) || (x == startMap.exitX && y == startMap.exitY)) continue;
+
+                        m.X = x;
+                        m.Y = y;
+                        break;
+                    }
+                }
+            }
+        }
 
         MovementSystem.Run(hero, dungeon, buffer);
     }

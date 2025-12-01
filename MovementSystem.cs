@@ -26,7 +26,7 @@ static class MovementSystem
             UpdateMonsters(hero, dungeon, now);
 
             ConsoleRenderer.clearBuffer(buffer);
-            RenderGame(hero, dungeon, buffer, fps);
+            RenderGame(hero, dungeon, buffer, fps, now);
 
             frames++;
             long now2 = sw.ElapsedMilliseconds;
@@ -60,7 +60,7 @@ static class MovementSystem
 
             if (dx != 0 || dy != 0)
             {
-                TryMoveHero(hero, dungeon, dx, dy, nowMs, ref lastHeroAttackMs);
+                TryMoveHero(hero, dungeon, dx, dy);
             }
             else if (key == ConsoleKey.Spacebar)
             {
@@ -69,7 +69,7 @@ static class MovementSystem
         }
     }
 
-    static void TryMoveHero(Hero hero, Dungeon dungeon, int dx, int dy, long nowMs, ref long lastHeroAttackMs)
+    static void TryMoveHero(Hero hero, Dungeon dungeon, int dx, int dy)
     {
         Map map = dungeon.CurrentMap();
 
@@ -79,11 +79,7 @@ static class MovementSystem
         if (!map.InBounds(nx, ny)) return;
 
         int mi = IndexOfMonsterAt(map, nx, ny);
-        if (mi >= 0)
-        {
-            TryHeroAttackOnMonsterIndex(hero, map, mi, nowMs, ref lastHeroAttackMs);
-            return;
-        }
+        if (mi >= 0) return;
 
         Tile tile = map.tiles[ny, nx];
 
@@ -160,7 +156,7 @@ static class MovementSystem
 
         if (monsterIndex < 0 || monsterIndex >= map.monsters.Count) return;
         Monster m = map.monsters[monsterIndex];
-        CombatSystem.HeroAttack(hero, m, map);
+        CombatSystem.HeroAttack(hero, m, map, nowMs);
     }
 
     static void CollectLootAtPosition(Hero hero, Map map)
@@ -334,7 +330,7 @@ static class MovementSystem
         }
     }
 
-    static void RenderGame(Hero hero, Dungeon dungeon, char[,] buffer, double fps)
+    static void RenderGame(Hero hero, Dungeon dungeon, char[,] buffer, double fps, long nowMs)
     {
         Map map = dungeon.CurrentMap();
         int h = buffer.GetLength(0);
@@ -362,10 +358,19 @@ static class MovementSystem
                         {
                             monsterHere = true;
 
-                            if (m is Goblin) mc = 'g';
-                            else if (m is Orc) mc = 'o';
-                            else if (m is Dragon) mc = 'D';
-                            else mc = 'm';
+                            bool flashing = nowMs - m.LastHitTimeMs < 120;
+
+                            if (flashing)
+                            {
+                                mc = '*';
+                            }
+                            else
+                            {
+                                if (m is Goblin) mc = 'g';
+                                else if (m is Orc) mc = 'o';
+                                else if (m is Dragon) mc = 'D';
+                                else mc = 'm';
+                            }
 
                             break;
                         }
@@ -428,9 +433,10 @@ static class MovementSystem
 
 static class CombatSystem
 {
-    public static void HeroAttack(Hero hero, Monster monster, Map map)
+    public static void HeroAttack(Hero hero, Monster monster, Map map, long nowMs)
     {
         int dmg = hero.GetAttackDamage();
+        monster.LastHitTimeMs = nowMs;
         bool dead = monster.Damage(dmg);
         if (dead)
         {

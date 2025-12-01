@@ -97,15 +97,6 @@ class Dungeon
 
 static class DungeonGenerator
 {
-    struct RoomRect
-    {
-        public int x;
-        public int y;
-        public int w;
-        public int h;
-        public int cluster;
-    }
-
     public static Dungeon CreateSimpleDungeon(int layerCount, int width, int height)
     {
         if (layerCount < 1) layerCount = 1;
@@ -148,7 +139,7 @@ static class DungeonGenerator
     {
         Map m = new Map(w, h);
 
-        GenerateRoomLayout(m);
+        GeneratePartitionedLayout(m);
 
         downX = -1;
         downY = -1;
@@ -265,7 +256,7 @@ static class DungeonGenerator
         return m;
     }
 
-    static void GenerateRoomLayout(Map m)
+    static void GeneratePartitionedLayout(Map m)
     {
         int w = m.Width;
         int h = m.Height;
@@ -278,231 +269,84 @@ static class DungeonGenerator
                     m.tiles[y, x] = Tile.Wall;
                 else
                     m.tiles[y, x] = Tile.Floor;
+                m.isDoor[y, x] = false;
             }
         }
 
-        List<RoomRect> rooms = new List<RoomRect>();
+        int innerX = 1;
+        int innerY = 1;
+        int innerW = w - 2;
+        int innerH = h - 2;
 
-        int maxClusters = 3;
-        int clusterCount = RNG.Next(1, maxClusters + 1);
-        int targetRooms = 12;
-        int roomsPerClusterBase = targetRooms / clusterCount;
-
-        for (int c = 0; c < clusterCount; c++)
-        {
-            int roomsInCluster = roomsPerClusterBase + RNG.Next(0, 3);
-            List<RoomRect> clusterRooms = new List<RoomRect>();
-
-            for (int n = 0; n < roomsInCluster; n++)
-            {
-                RoomRect r;
-
-                if (clusterRooms.Count == 0)
-                {
-                    r = MakeRandomRoomCandidateForCluster(w, h, c);
-                }
-                else
-                {
-                    RoomRect baseRoom = clusterRooms[RNG.Next(0, clusterRooms.Count)];
-                    r = MakeRoomNear(baseRoom, w, h);
-                }
-
-                if (r.w <= 0 || r.h <= 0) continue;
-                r.cluster = c;
-
-                bool overlap = false;
-                for (int j = 0; j < rooms.Count; j++)
-                {
-                    if (IntersectsExpanded(r, rooms[j]))
-                    {
-                        overlap = true;
-                        break;
-                    }
-                }
-                if (overlap) continue;
-
-                rooms.Add(r);
-                clusterRooms.Add(r);
-            }
-        }
-
-        for (int i = 0; i < rooms.Count; i++)
-        {
-            RoomRect r = rooms[i];
-
-            for (int y = r.y; y < r.y + r.h; y++)
-            {
-                for (int x = r.x; x < r.x + r.w; x++)
-                {
-                    if (y <= 0 || y >= h - 1 || x <= 0 || x >= w - 1) continue;
-                    if (x == r.x || x == r.x + r.w - 1 || y == r.y || y == r.y + r.h - 1)
-                        m.tiles[y, x] = Tile.Wall;
-                }
-            }
-
-            AddDoorsForRect(m, r);
-        }
+        PartitionRegion(m, innerX, innerY, innerW, innerH, 0);
     }
 
-    static RoomRect MakeRandomRoomCandidateForCluster(int mapW, int mapH, int cluster)
+    static void PartitionRegion(Map m, int x, int y, int w, int h, int depth)
     {
-        RoomRect r = new RoomRect();
+        int minSize = 6;
+        int maxDepth = 6;
 
-        int minW = 4;
-        int minH = 4;
-        int maxW = Math.Min(12, mapW - 4);
-        int maxH = Math.Min(8, mapH - 4);
+        if (depth >= maxDepth) return;
+        if (w < minSize * 2 && h < minSize * 2) return;
 
-        if (maxW < minW || maxH < minH)
+        bool splitVertical;
+        if (w >= h * 1.3) splitVertical = true;
+        else if (h >= w * 1.3) splitVertical = false;
+        else splitVertical = RNG.Next(0, 2) == 0;
+
+        if (splitVertical)
         {
-            r.w = 0;
-            r.h = 0;
-            return r;
-        }
+            if (w < minSize * 2) return;
 
-        int side = cluster % 4;
+            int splitX = RNG.Next(x + minSize, x + w - minSize);
+            for (int yy = y; yy < y + h; yy++)
+            {
+                m.tiles[yy, splitX] = Tile.Wall;
+            }
 
-        int rw = RNG.Next(minW, maxW + 1);
-        int rh = RNG.Next(minH, maxH + 1);
+            int doorY = RNG.Next(y + 1, y + h - 1);
+            if (doorY > y && doorY < y + h - 1 && splitX > 0 && splitX < m.Width - 1)
+            {
+                if (m.tiles[doorY, splitX - 1] == Tile.Floor && m.tiles[doorY, splitX + 1] == Tile.Floor)
+                {
+                    m.tiles[doorY, splitX] = Tile.Floor;
+                    m.isDoor[doorY, splitX] = true;
+                }
+            }
 
-        if (side == 0)
-        {
-            r.y = 1;
-            r.x = RNG.Next(1, mapW - rw - 1);
-        }
-        else if (side == 1)
-        {
-            r.y = mapH - rh - 1;
-            r.x = RNG.Next(1, mapW - rw - 1);
-        }
-        else if (side == 2)
-        {
-            r.x = 1;
-            r.y = RNG.Next(1, mapH - rh - 1);
+            int leftW = splitX - x;
+            int rightX = splitX + 1;
+            int rightW = x + w - rightX;
+
+            if (leftW > 0) PartitionRegion(m, x, y, leftW, h, depth + 1);
+            if (rightW > 0) PartitionRegion(m, rightX, y, rightW, h, depth + 1);
         }
         else
         {
-            r.x = mapW - rw - 1;
-            r.y = RNG.Next(1, mapH - rh - 1);
-        }
+            if (h < minSize * 2) return;
 
-        r.w = rw;
-        r.h = rh;
-
-        if (r.x < 1) r.x = 1;
-        if (r.y < 1) r.y = 1;
-        if (r.x + r.w > mapW - 1) r.w = mapW - 1 - r.x;
-        if (r.y + r.h > mapH - 1) r.h = mapH - 1 - r.y;
-
-        return r;
-    }
-
-    static RoomRect MakeRoomNear(RoomRect baseRoom, int mapW, int mapH)
-    {
-        RoomRect r = new RoomRect();
-
-        int minW = 4;
-        int minH = 4;
-        int maxW = Math.Min(12, mapW - 4);
-        int maxH = Math.Min(8, mapH - 4);
-
-        if (maxW < minW || maxH < minH)
-        {
-            r.w = 0;
-            r.h = 0;
-            return r;
-        }
-
-        int rw = RNG.Next(minW, maxW + 1);
-        int rh = RNG.Next(minH, maxH + 1);
-
-        int dx = RNG.Next(-6, 7);
-        int dy = RNG.Next(-4, 5);
-
-        r.x = baseRoom.x + dx;
-        r.y = baseRoom.y + dy;
-        r.w = rw;
-        r.h = rh;
-
-        if (r.x < 1) r.x = 1;
-        if (r.y < 1) r.y = 1;
-        if (r.x + r.w > mapW - 1) r.w = mapW - 1 - r.x;
-        if (r.y + r.h > mapH - 1) r.h = mapH - 1 - r.y;
-
-        return r;
-    }
-
-    static bool IntersectsExpanded(RoomRect a, RoomRect b)
-    {
-        int ax1 = a.x - 1;
-        int ay1 = a.y - 1;
-        int ax2 = a.x + a.w;
-        int ay2 = a.y + a.h;
-
-        int bx1 = b.x - 1;
-        int by1 = b.y - 1;
-        int bx2 = b.x + b.w;
-        int by2 = b.y + b.h;
-
-        if (ax1 >= bx2 || bx1 >= ax2) return false;
-        if (ay1 >= by2 || by1 >= ay2) return false;
-        return true;
-    }
-
-    static void AddDoorsForRect(Map m, RoomRect r)
-    {
-        int doorCount = RNG.Next(1, 4);
-        int mapW = m.Width;
-        int mapH = m.Height;
-
-        for (int i = 0; i < doorCount; i++)
-        {
-            int side = RNG.Next(0, 4);
-
-            if (side == 0)
+            int splitY = RNG.Next(y + minSize, y + h - minSize);
+            for (int xx = x; xx < x + w; xx++)
             {
-                if (r.w <= 2) continue;
-                int dx = RNG.Next(r.x + 1, r.x + r.w - 1);
-                int dy = r.y;
-                if (dy > 0 && dy < mapH - 1 && dx > 0 && dx < mapW - 1)
+                m.tiles[splitY, xx] = Tile.Wall;
+            }
+
+            int doorX = RNG.Next(x + 1, x + w - 1);
+            if (doorX > x && doorX < x + w - 1 && splitY > 0 && splitY < m.Height - 1)
+            {
+                if (m.tiles[splitY - 1, doorX] == Tile.Floor && m.tiles[splitY + 1, doorX] == Tile.Floor)
                 {
-                    m.tiles[dy, dx] = Tile.Floor;
-                    m.isDoor[dy, dx] = true;
+                    m.tiles[splitY, doorX] = Tile.Floor;
+                    m.isDoor[splitY, doorX] = true;
                 }
             }
-            else if (side == 1)
-            {
-                if (r.w <= 2) continue;
-                int dx = RNG.Next(r.x + 1, r.x + r.w - 1);
-                int dy = r.y + r.h - 1;
-                if (dy > 0 && dy < mapH - 1 && dx > 0 && dx < mapW - 1)
-                {
-                    m.tiles[dy, dx] = Tile.Floor;
-                    m.isDoor[dy, dx] = true;
-                }
-            }
-            else if (side == 2)
-            {
-                if (r.h <= 2) continue;
-                int dx = r.x;
-                int dy = RNG.Next(r.y + 1, r.y + r.h - 1);
-                if (dy > 0 && dy < mapH - 1 && dx > 0 && dx < mapW - 1)
-                {
-                    m.tiles[dy, dx] = Tile.Floor;
-                    m.isDoor[dy, dx] = true;
-                }
-            }
-            else
-            {
-                if (r.h <= 2) continue;
-                int dx = r.x + r.w - 1;
-                int dy = RNG.Next(r.y + 1, r.y + r.h - 1);
-                if (dy > 0 && dy < mapH - 1 && dx > 0 && dx < mapW - 1)
-                {
-                    m.tiles[dy, dx] = Tile.Floor;
-                    m.isDoor[dy, dx] = true;
-                }
-            }
+
+            int topH = splitY - y;
+            int bottomY = splitY + 1;
+            int bottomH = y + h - bottomY;
+
+            if (topH > 0) PartitionRegion(m, x, y, w, topH, depth + 1);
+            if (bottomH > 0) PartitionRegion(m, x, bottomY, w, bottomH, depth + 1);
         }
     }
 
