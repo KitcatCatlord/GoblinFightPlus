@@ -34,7 +34,8 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
                 _state = GameState.Playing;
                 return;
             }
-            if (key == ConsoleKey.D) {
+            if (key == ConsoleKey.D)
+            {
                 var key2 = Console.ReadKey(true).Key;
                 int idx2 = KeyToIndex(key2);
                 if (idx2 >= 0 && idx2 < inv.Count)
@@ -62,7 +63,8 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
         ConsoleRenderer.DrawString(buffer, 2, 6, "I hope you're not pause boosting coz that'd be sad...");
         ConsoleRenderer.Render(buffer);
 
-        if (Console.KeyAvailable) {
+        if (Console.KeyAvailable)
+        {
             var key = Console.ReadKey(true).Key;
             if (key == ConsoleKey.Escape)
             {
@@ -81,7 +83,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
 
         int frames = 0;
         double fps = 0;
-        long lastTime = 0;
+        long lastTime = sw.ElapsedMilliseconds;
         long lastHeroAttackMs = 0;
 
         while (true)
@@ -90,7 +92,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
             switch (_state)
             {
                 case GameState.Playing:
-                    UpdateGame(sw, frames, fps, lastTime, lastHeroAttackMs, dungeon, hero, buffer, now);
+                    UpdateGame(sw, ref frames, ref fps, ref lastTime, ref lastHeroAttackMs, dungeon, hero, buffer, now);
                     break;
                 case GameState.Paused:
                     DrawPauseScreen(buffer);
@@ -101,8 +103,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
             }
         }
     }
-
-    static void UpdateGame(Stopwatch sw, int frames, double fps, long lastTime, long lastHeroAttackMs, Dungeon dungeon, Hero hero, char[,] buffer, long now)
+    static void UpdateGame(Stopwatch sw, ref int frames, ref double fps, ref long lastTime, ref long lastHeroAttackMs, Dungeon dungeon, Hero hero, char[,] buffer, long now)
     {
         HandleInput(hero, dungeon, now, ref lastHeroAttackMs);
 
@@ -507,8 +508,8 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
         }
 
         string fpsText = "FPS: " + fps.ToString("0");
-        int fpsX = w - fpsText.Length - 1;
-        if (fpsX < 0) fpsX = 0;
+        // int fpsX = w - fpsText.Length - 1;
+        // if (fpsX < 0) fpsX = 0;
 
         string hpText = "HP: " + hero.Health.ToString();
         int hpY = h - 1;
@@ -561,5 +562,3 @@ static class CombatSystem
         }
     }
 }
-
-// The monsters are attacking me at their movment speed, and they attack me immediately as I attack them

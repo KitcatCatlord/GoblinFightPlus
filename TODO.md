@@ -6,7 +6,7 @@
 BRRRRRRR!!!!!!!
 
 [x] Add start menu with controls
-Gonna be ez
+[ ] Give different weapons different features (e.g bow has 4 block range etc.) 
 
 [ ] 3D rendering
 o.o

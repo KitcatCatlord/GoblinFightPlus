@@ -387,10 +387,10 @@ static class DungeonGenerator
     }
 
     static bool IsNearStairs(Map m, int x, int y) {
-        int sx1 = m.stairsUpX;
-        int sy1 = m.stairsUpX;
-        int sx2 = m.stairsUpX;
-        int sy2 = m.stairsUpX;
+        int sx1 = m.stairsUpX; // bro these were all m.stairsUpX I'm so stupiddddd
+        int sy1 = m.stairsUpY;
+        int sx2 = m.stairsDownX;
+        int sy2 = m.stairsDownY;
         
         for (int dy = -5; dy <= 5; dy++) {
             for (int dx = -5; dx <= 5; dx++) {
