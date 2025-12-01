@@ -1,2 +1,3 @@
 FYI: The level generation of this goblin fight game are adaptations of an old goblin fight game I made with single enemies and no items. That game also had walls and pathfinding enemies, except I've adapted this one to have rooms, and to spawn items.
+
 When I get to the 3D rendering part of this, I will likely adapt my old console 3D renderer from the repo '3D-Test-2-Placing-Objects' to work with this - it'll require a lot of changes though.
