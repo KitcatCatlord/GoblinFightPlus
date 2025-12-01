@@ -302,7 +302,7 @@ class Orc : Monster
             ItemDatabase.Axe,
             ItemDatabase.Bow
         },
-        1200
+        800
     )
     {
     }
@@ -317,7 +317,7 @@ class Dragon : Monster
         new Item[] {
             ItemDatabase.FireBreath
         },
-        2000
+        1300
     )
     {
     }

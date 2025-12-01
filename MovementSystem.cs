@@ -450,15 +450,15 @@ static class CombatSystem
             hero.X = monster.X;
             hero.Y = monster.Y;
         }
-        else
-        {
-            MonsterAttack(hero, monster, nowMs);
-        }
     }
 
     public static void MonsterAttack(Hero hero, Monster monster, long now)
     {
-        int md = monster.GetAttackDamage(now);
+        double nowSeconds = now / 1000.0;
+        int md = monster.GetAttackDamage(nowSeconds);
+        if (md <= 0)
+            return;
+
         bool heroDead = hero.Damage(md);
         if (heroDead)
         {
