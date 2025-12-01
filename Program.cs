@@ -217,6 +217,7 @@ abstract class Monster
     protected long _lastHitTimeMs;
     public int X;
     public int Y;
+    private double _lastAttackTime = 0;
 
     public Monster(int health, int strength, int skill, Item[] possibleWeapons, int moveIntervalMs)
     {
@@ -256,8 +257,13 @@ abstract class Monster
         get => _lastHitTimeMs;
         set => _lastHitTimeMs = value;
     }
-    public virtual int GetAttackDamage()
+    public virtual int GetAttackDamage(double now)
     {
+        if (now - _lastAttackTime < _equippedItem.cooldown)
+            return 0;
+
+        _lastAttackTime = now;
+
         double raw = _strength * _skill + _equippedItem.damage;
         return (int)Math.Round(raw);
     }

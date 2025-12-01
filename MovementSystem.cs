@@ -198,7 +198,7 @@ static class MovementSystem
             int dist = Math.Abs(m.X - hero.X) + Math.Abs(m.Y - hero.Y);
             if (dist <= 1)
             {
-                CombatSystem.MonsterAttack(hero, m);
+                CombatSystem.MonsterAttack(hero, m, nowMs);
                 m.LastMoveTimeMs = nowMs;
                 continue;
             }
@@ -212,7 +212,7 @@ static class MovementSystem
 
             if (stepX == hero.X && stepY == hero.Y)
             {
-                CombatSystem.MonsterAttack(hero, m);
+                CombatSystem.MonsterAttack(hero, m, nowMs);
                 m.LastMoveTimeMs = nowMs;
                 continue;
             }
@@ -423,7 +423,7 @@ static class MovementSystem
 
         var overlays = new (int x, int y, string text, string fgHex, string bgHex)[]
         {
-            (fpsX, 0, fpsText, "#00FF00", ""),
+            (2, hpY-1, fpsText, "#00FF00", ""),
             (2, hpY, hpText, "#FF5555", "")
         };
 
@@ -452,20 +452,13 @@ static class CombatSystem
         }
         else
         {
-            int md = monster.GetAttackDamage();
-            bool heroDead = hero.Damage(md);
-            if (heroDead)
-            {
-                Console.Clear();
-                Console.WriteLine("You died.");
-                Environment.Exit(0);
-            }
+            MonsterAttack(hero, monster, nowMs);
         }
     }
 
-    public static void MonsterAttack(Hero hero, Monster monster)
+    public static void MonsterAttack(Hero hero, Monster monster, long now)
     {
-        int md = monster.GetAttackDamage();
+        int md = monster.GetAttackDamage(now);
         bool heroDead = hero.Damage(md);
         if (heroDead)
         {
@@ -475,3 +468,5 @@ static class CombatSystem
         }
     }
 }
+
+// The monsters are attacking me at their movment speed, and they attack me immediately as I attack them

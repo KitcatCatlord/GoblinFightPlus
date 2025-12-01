@@ -114,20 +114,23 @@ static class DungeonGenerator
             bool hasDown = i < layerCount - 1;
             bool isLast = i == layerCount - 1;
 
-            int upX = -1;
-            int upY = -1;
-            if (hasUp)
-            {
-                upX = prevDownX;
-                upY = prevDownY;
-            }
+            int upX = prevDownX;
+            int upY = prevDownY;
 
             int downX;
             int downY;
 
-            Map m = CreateLayer(width, height, hasUp, hasDown, isLast, upX, upY, out downX, out downY);
-            d.layers.Add(m);
+            Map m;
 
+            while (true)
+            {
+                m = CreateLayer(width, height, hasUp, hasDown, isLast, upX, upY, out downX, out downY);
+
+                if (IsFullyAccessible(m))
+                    break;
+            }
+
+            d.layers.Add(m);
             prevDownX = downX;
             prevDownY = downY;
         }
@@ -146,10 +149,7 @@ static class DungeonGenerator
 
         if (hasUp)
         {
-            if (!m.InBounds(upX, upY) || m.tiles[upY, upX] != Tile.Floor || m.isDoor[upY, upX])
-            {
-                FindRandomFloor(m, out upX, out upY);
-            }
+            EnsureSafeFloor(m, out upX, out upY);
             m.stairsUpX = upX;
             m.stairsUpY = upY;
             m.tiles[upY, upX] = Tile.StairsUp;
@@ -159,14 +159,7 @@ static class DungeonGenerator
         {
             int sx;
             int sy;
-            if (hasUp)
-            {
-                FindRandomFloorFar(m, upX, upY, out sx, out sy);
-            }
-            else
-            {
-                FindRandomFloor(m, out sx, out sy);
-            }
+            EnsureSafeFloor(m, out sx, out sy);
             m.stairsDownX = sx;
             m.stairsDownY = sy;
             m.tiles[sy, sx] = Tile.StairsDown;
@@ -178,14 +171,7 @@ static class DungeonGenerator
         {
             int ex;
             int ey;
-            if (hasUp)
-            {
-                FindRandomFloorFar(m, upX, upY, out ex, out ey);
-            }
-            else
-            {
-                FindRandomFloor(m, out ex, out ey);
-            }
+            EnsureSafeFloor(m, out ex, out ey);
             m.exitX = ex;
             m.exitY = ey;
             m.tiles[ey, ex] = Tile.Exit;
@@ -196,14 +182,7 @@ static class DungeonGenerator
         {
             int mx;
             int my;
-            while (true)
-            {
-                FindRandomFloor(m, out mx, out my);
-                if (m.tiles[my, mx] != Tile.Floor) continue;
-                if (m.isDoor[my, mx]) continue;
-                if ((mx == m.stairsUpX && my == m.stairsUpY) || (mx == m.stairsDownX && my == m.stairsDownY) || (mx == m.exitX && my == m.exitY)) continue;
-                break;
-            }
+            EnsureSafeFloor(m, out mx, out my);
             Monster monster = RandomMonster();
             monster.X = mx;
             monster.Y = my;
@@ -215,45 +194,77 @@ static class DungeonGenerator
         {
             int lx;
             int ly;
-            while (true)
-            {
-                FindRandomFloor(m, out lx, out ly);
-                if (m.tiles[ly, lx] != Tile.Floor) continue;
-                if (m.isDoor[ly, lx]) continue;
-                if ((lx == m.stairsUpX && ly == m.stairsUpY) || (lx == m.stairsDownX && ly == m.stairsDownY) || (lx == m.exitX && ly == m.exitY)) continue;
-
-                bool monsterHere = false;
-                for (int j = 0; j < m.monsters.Count; j++)
-                {
-                    if (m.monsters[j].X == lx && m.monsters[j].Y == ly)
-                    {
-                        monsterHere = true;
-                        break;
-                    }
-                }
-                if (monsterHere) continue;
-
-                bool lootHere = false;
-                for (int j = 0; j < m.loot.Count; j++)
-                {
-                    if (m.loot[j].X == lx && m.loot[j].Y == ly)
-                    {
-                        lootHere = true;
-                        break;
-                    }
-                }
-                if (lootHere) continue;
-
-                break;
-            }
-
+            EnsureSafeFloor(m, out lx, out ly);
             Item template = RandomLootTemplate();
-            Item lootItem = ItemFactory.MakeRandomQuality(template);
-            MapLoot ml = new MapLoot { item = lootItem, X = lx, Y = ly };
-            m.loot.Add(ml);
+            Item q = ItemFactory.MakeRandomQuality(template);
+            m.loot.Add(new MapLoot { item = q, X = lx, Y = ly });
         }
 
         return m;
+    }
+
+    static bool IsFullyAccessible(Map m)
+    {
+        int w = m.Width;
+        int h = m.Height;
+
+        bool[,] visited = new bool[h, w];
+
+        int startX = -1;
+        int startY = -1;
+
+        for (int y = 0; y < h && startX == -1; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                if (m.tiles[y, x] == Tile.Floor)
+                {
+                    startX = x;
+                    startY = y;
+                    break;
+                }
+            }
+        }
+
+        if (startX == -1) return false;
+
+        Queue<(int x, int y)> q = new Queue<(int x, int y)>();
+        q.Enqueue((startX, startY));
+        visited[startY, startX] = true;
+
+        int[,] dirs = new int[,] { {1,0},{-1,0},{0,1},{0,-1} };
+
+        while (q.Count > 0)
+        {
+            var (cx, cy) = q.Dequeue();
+
+            for (int i = 0; i < 4; i++)
+            {
+                int nx = cx + dirs[i, 0];
+                int ny = cy + dirs[i, 1];
+
+                if (!m.InBounds(nx, ny)) continue;
+                if (visited[ny, nx]) continue;
+                if (m.tiles[ny, nx] == Tile.Wall) continue;
+
+                visited[ny, nx] = true;
+                q.Enqueue((nx, ny));
+            }
+        }
+
+        for (int y = 0; y < h; y++)
+        {
+            for (int x = 0; x < w; x++)
+            {
+                if (m.tiles[y, x] == Tile.Floor || m.tiles[y, x] == Tile.StairsUp || m.tiles[y, x] == Tile.StairsDown || m.tiles[y, x] == Tile.Exit)
+                {
+                    if (!visited[y, x])
+                        return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     static void GeneratePartitionedLayout(Map m)
@@ -273,12 +284,7 @@ static class DungeonGenerator
             }
         }
 
-        int innerX = 1;
-        int innerY = 1;
-        int innerW = w - 2;
-        int innerH = h - 2;
-
-        PartitionRegion(m, innerX, innerY, innerW, innerH, 0);
+        PartitionRegion(m, 1, 1, w - 2, h - 2, 0);
     }
 
     static void PartitionRegion(Map m, int x, int y, int w, int h, int depth)
@@ -300,19 +306,9 @@ static class DungeonGenerator
 
             int splitX = RNG.Next(x + minSize, x + w - minSize);
             for (int yy = y; yy < y + h; yy++)
-            {
                 m.tiles[yy, splitX] = Tile.Wall;
-            }
 
-            int doorY = RNG.Next(y + 1, y + h - 1);
-            if (doorY > y && doorY < y + h - 1 && splitX > 0 && splitX < m.Width - 1)
-            {
-                if (m.tiles[doorY, splitX - 1] == Tile.Floor && m.tiles[doorY, splitX + 1] == Tile.Floor)
-                {
-                    m.tiles[doorY, splitX] = Tile.Floor;
-                    m.isDoor[doorY, splitX] = true;
-                }
-            }
+            TryMakeDoor(m, splitX, y, h, vertical: true);
 
             int leftW = splitX - x;
             int rightX = splitX + 1;
@@ -327,19 +323,9 @@ static class DungeonGenerator
 
             int splitY = RNG.Next(y + minSize, y + h - minSize);
             for (int xx = x; xx < x + w; xx++)
-            {
                 m.tiles[splitY, xx] = Tile.Wall;
-            }
 
-            int doorX = RNG.Next(x + 1, x + w - 1);
-            if (doorX > x && doorX < x + w - 1 && splitY > 0 && splitY < m.Height - 1)
-            {
-                if (m.tiles[splitY - 1, doorX] == Tile.Floor && m.tiles[splitY + 1, doorX] == Tile.Floor)
-                {
-                    m.tiles[splitY, doorX] = Tile.Floor;
-                    m.isDoor[splitY, doorX] = true;
-                }
-            }
+            TryMakeDoor(m, splitY, x, w, vertical: false);
 
             int topH = splitY - y;
             int bottomY = splitY + 1;
@@ -350,6 +336,91 @@ static class DungeonGenerator
         }
     }
 
+    static void TryMakeDoor(Map m, int splitLine, int start, int len, bool vertical)
+    {
+        int attempts = 0;
+
+        while (attempts < 20)
+        {
+            attempts++;
+            int px = vertical ? splitLine : RNG.Next(start + 1, start + len - 1);
+            int py = vertical ? RNG.Next(start + 1, start + len - 1) : splitLine;
+
+            if (!m.InBounds(px, py)) continue;
+
+            if (vertical)
+            {
+                if (px > 0 && px < m.Width - 1)
+                {
+                    if (m.tiles[py, px - 1] == Tile.Floor && m.tiles[py, px + 1] == Tile.Floor)
+                    {
+                        m.tiles[py, px] = Tile.Floor;
+                        m.isDoor[py, px] = true;
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                if (py > 0 && py < m.Height - 1)
+                {
+                    if (m.tiles[py - 1, px] == Tile.Floor && m.tiles[py + 1, px] == Tile.Floor)
+                    {
+                        m.tiles[py, px] = Tile.Floor;
+                        m.isDoor[py, px] = true;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    static void EnsureSafeFloor(Map m, out int x, out int y)
+    {
+        while (true)
+        {
+            FindRandomFloor(m, out x, out y);
+            if (IsNearDoor(m, x, y)) continue;
+            if (IsNearStairs(m, x, y)) continue;
+            return;
+        }
+    }
+
+    static bool IsNearStairs(Map m, int x, int y) {
+        int sx1 = m.stairsUpX;
+        int sy1 = m.stairsUpX;
+        int sx2 = m.stairsUpX;
+        int sy2 = m.stairsUpX;
+        
+        for (int dy = -5; dy <= 5; dy++) {
+            for (int dx = -5; dx <= 5; dx++) {
+                int nx = x + dx;
+                int ny = y + dy;
+
+                if (!m.InBounds(nx, ny)) continue;
+
+                if ((nx == sx1 && ny == sy1) || (nx == sx2 && ny == sy2) || (nx == m.exitX && ny == m.exitY))
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    static bool IsNearDoor(Map m, int x, int y)
+    {
+        for (int dy = -2; dy <= 2; dy++)
+        {
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                int nx = x + dx;
+                int ny = y + dy;
+                if (!m.InBounds(nx, ny)) continue;
+                if (m.isDoor[ny, nx]) return true;
+            }
+        }
+        return false;
+    }
+
     static void FindRandomFloor(Map m, out int x, out int y)
     {
         while (true)
@@ -358,32 +429,6 @@ static class DungeonGenerator
             y = RNG.Next(1, m.Height - 1);
             if (m.tiles[y, x] != Tile.Floor) continue;
             if (m.isDoor[y, x]) continue;
-            return;
-        }
-    }
-
-    static void FindRandomFloorFar(Map m, int fromX, int fromY, out int x, out int y)
-    {
-        int minDist = (m.Width + m.Height) / 4;
-        int tries = 0;
-
-        while (true)
-        {
-            x = RNG.Next(1, m.Width - 1);
-            y = RNG.Next(1, m.Height - 1);
-            if (m.tiles[y, x] != Tile.Floor) continue;
-            if (m.isDoor[y, x]) continue;
-
-            if (fromX >= 0 && fromY >= 0)
-            {
-                int dist = Math.Abs(x - fromX) + Math.Abs(y - fromY);
-                if (dist < minDist && tries < 100)
-                {
-                    tries++;
-                    continue;
-                }
-            }
-
             return;
         }
     }
