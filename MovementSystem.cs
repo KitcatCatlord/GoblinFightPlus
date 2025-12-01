@@ -2,8 +2,67 @@ using System.Diagnostics;
 
 namespace GoblinFight_;
 
-static class MovementSystem
+static class MovementSystem //TODO: Update this name (it's not just the movement system anymore, clearly)
 {
+    static GameState _state = GameState.Playing;
+
+    static void DrawInventoryScreen(Hero hero, Char[,] buffer)
+    {
+        ConsoleRenderer.clearBuffer(buffer);
+        ConsoleRenderer.DrawString(buffer, 2, 2, "INVENTORY");
+        ConsoleRenderer.DrawString(buffer, 2, 3, "Press I to return.");
+        var inv = hero.ListInventory();
+
+        int y = 5;
+        for (int i = 0; i < inv.Count; i++)
+        {
+            var qName = ItemFactory.ShortQualityName(inv[i].quality);
+            string txt = $"{i}. {inv[i].name} ({qName})    dmg: {inv[i].damage}    cd: {inv[i].cooldown.ToString("0.0")}s    wt: {inv[i].weight}";
+            ConsoleRenderer.DrawString(buffer, 2, y, txt);
+            y++;
+        }
+
+        ConsoleRenderer.DrawString(buffer, 2, y + 1, "Press num key to equip that item."); // Can you do ++y like in C++?
+        ConsoleRenderer.Render(buffer);
+
+        if (Console.KeyAvailable)
+        {
+            var key = Console.ReadKey(true).Key;
+            if (key == ConsoleKey.I)
+            {
+                _state = GameState.Playing;
+                return;
+            }
+            int idx = KeyToIndex(key);
+            if (idx >= 0 && idx < inv.Count)
+                hero.EquipItem(idx);
+        }
+    }
+    static int KeyToIndex(ConsoleKey k)
+    {
+        if (k >= ConsoleKey.D0 && k <= ConsoleKey.D9)
+            return (int)(k - ConsoleKey.D0);
+        if (k >= ConsoleKey.NumPad0 && k <= ConsoleKey.NumPad9) // Coz you gotta support the numpad community frfr
+            return (int)(k - ConsoleKey.NumPad0);
+        return -1;
+    }
+    static void DrawPauseScreen(char[,] buffer)
+    {
+        ConsoleRenderer.clearBuffer(buffer);
+        ConsoleRenderer.DrawString(buffer, 2, 2, "PAUSED"); // Maybe centre this?
+        ConsoleRenderer.DrawString(buffer, 2, 4, "Press ESC to resume");
+        ConsoleRenderer.DrawString(buffer, 2, 6, "I hope you're not pause boosting coz that'd be sad...");
+        ConsoleRenderer.Render(buffer);
+
+        if (Console.KeyAvailable) {
+            var key = Console.ReadKey(true).Key;
+            if (key == ConsoleKey.Escape)
+            {
+                _state = GameState.Playing;
+                return;
+            }
+        }
+    }
     public static void Run(Hero hero, Dungeon dungeon, char[,] buffer)
     {
         int bufferHeight = buffer.GetLength(0);
@@ -20,22 +79,37 @@ static class MovementSystem
         while (true)
         {
             long now = sw.ElapsedMilliseconds;
-
-            HandleInput(hero, dungeon, now, ref lastHeroAttackMs);
-
-            UpdateMonsters(hero, dungeon, now);
-
-            ConsoleRenderer.clearBuffer(buffer);
-            RenderGame(hero, dungeon, buffer, fps, now);
-
-            frames++;
-            long now2 = sw.ElapsedMilliseconds;
-            if (now2 - lastTime >= 1000)
+            switch (_state)
             {
-                fps = frames * 1000.0 / (now2 - lastTime);
-                frames = 0;
-                lastTime = now2;
+                case GameState.Playing:
+                    UpdateGame(sw, frames, fps, lastTime, lastHeroAttackMs, dungeon, hero, buffer, now);
+                    break;
+                case GameState.Paused:
+                    DrawPauseScreen(buffer);
+                    break;
+                case GameState.Inventory:
+                    DrawInventoryScreen(hero, buffer);
+                    break;
             }
+        }
+    }
+
+    static void UpdateGame(Stopwatch sw, int frames, double fps, long lastTime, long lastHeroAttackMs, Dungeon dungeon, Hero hero, char[,] buffer, long now)
+    {
+        HandleInput(hero, dungeon, now, ref lastHeroAttackMs);
+
+        UpdateMonsters(hero, dungeon, now);
+
+        ConsoleRenderer.clearBuffer(buffer);
+        RenderGame(hero, dungeon, buffer, fps, now);
+
+        frames++;
+        long now2 = sw.ElapsedMilliseconds;
+        if (now2 - lastTime >= 1000)
+        {
+            fps = frames * 1000.0 / (now2 - lastTime);
+            frames = 0;
+            lastTime = now2;
         }
     }
 
@@ -46,8 +120,19 @@ static class MovementSystem
             var key = Console.ReadKey(true).Key;
             if (key == ConsoleKey.Escape)
             {
-                Console.Clear();
-                Environment.Exit(0);
+                if (_state == GameState.Playing)
+                    _state = GameState.Paused;
+                else if (_state == GameState.Paused)
+                    _state = GameState.Playing;
+                continue;
+            }
+            if (key == ConsoleKey.I)
+            {
+                if (_state == GameState.Playing)
+                    _state = GameState.Inventory;
+                else if (_state == GameState.Inventory)
+                    _state = GameState.Playing;
+                continue;
             }
 
             int dx = 0;

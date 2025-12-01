@@ -12,6 +12,12 @@ namespace GoblinFight_;
  *  
  * Later, maybe add weapon qualities? So good quality would do more damage or attack faster for example.
  */
+enum GameState
+{
+    Playing,
+    Paused,
+    Inventory
+}
 
 enum ItemQuality
 {
@@ -92,6 +98,13 @@ static class ItemFactory
 
         return item;
     }
+    public static string ShortQualityName(int q)
+    {
+        if (q == 3) return "Legendary";
+        if (q == 2) return "Rare";
+        if (q == 1) return "Fine";
+        return "Common";
+    }
 
     public static Item MakeRandomQuality(Item template)
     {
@@ -115,7 +128,7 @@ static class ItemFactory
 
 class Hero
 {
-    private int _health = 500;
+    private int _health = 100;
     private double _strength = 5;
     private int _skill = 1;
     private double _carryWeight = 0;
