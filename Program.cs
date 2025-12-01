@@ -92,9 +92,10 @@ static class ItemFactory
         if (speedMult < 0.5) speedMult = 0.5;
         item.cooldown = template.cooldown * speedMult;
 
-        string qName = QualityName(quality);
-        if (qName != "") item.name = qName + " " + template.name;
-        else item.name = template.name;
+        // string qName = QualityName(quality);
+        // if (qName != "") item.name = qName + " " + template.name;
+        // else item.name = template.name;
+        item.name = template.name;
 
         return item;
     }
