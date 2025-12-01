@@ -207,6 +207,18 @@ class Hero
         }
         return false;
     }
+    public bool DropItem(int index, Map map)
+    { // false for failed
+        if (index < 0 || index >= _inventory.Count) return false;
+        
+        Item drop = _inventory[index];
+        _inventory.RemoveAt(index);
+
+        MapLoot ml = new MapLoot { item = drop, X = X, Y = Y};
+        map.loot.Add(ml);
+
+        return true; // If you drop two items what happens... eh not my problem
+    }
     public virtual int GetAttackDamage()
     {
         double raw = _strength * _skill + _equippedItem.damage;
@@ -343,10 +355,19 @@ class Program
         ConsoleRenderer.Init();
         var buffer = ConsoleRenderer.CreateBuffer();
 
+        Console.WriteLine("Welcome to Goblin Fight Plus!");
+        Console.WriteLine("I should really call it Dungeon Fighters or something but anywho.");
+        Console.WriteLine("The controls are WASD, I to open inventory, ESC to pause, and SPACE to attack");
+        Console.Write("\nAnyway, enter how many layers you'd like in the dungeon: ");
+        int layers = int.TryParse(Console.ReadLine(), out int value) ? value : 5;
+        Console.WriteLine("Alright! Press ENTER when you're ready!");
+        Console.ReadLine();
+        Console.Clear();
+
         Hero hero = new Hero();
         hero.UpdateCarryWeight();
 
-        Dungeon dungeon = DungeonGenerator.CreateSimpleDungeon(5, 40, 20);
+        Dungeon dungeon = DungeonGenerator.CreateSimpleDungeon(layers, 40, 20);
 
         Map startMap = dungeon.CurrentMap();
 

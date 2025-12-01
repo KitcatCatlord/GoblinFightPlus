@@ -6,7 +6,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
 {
     static GameState _state = GameState.Playing;
 
-    static void DrawInventoryScreen(Hero hero, Char[,] buffer)
+    static void DrawInventoryScreen(Hero hero, Char[,] buffer, Map map)
     {
         ConsoleRenderer.clearBuffer(buffer);
         ConsoleRenderer.DrawString(buffer, 2, 2, "INVENTORY");
@@ -23,6 +23,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
         }
 
         ConsoleRenderer.DrawString(buffer, 2, y + 1, "Press num key to equip that item."); // Can you do ++y like in C++?
+        ConsoleRenderer.DrawString(buffer, 2, y + 2, "Press d + num key to drop an item.");
         ConsoleRenderer.Render(buffer);
 
         if (Console.KeyAvailable)
@@ -31,6 +32,13 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
             if (key == ConsoleKey.I)
             {
                 _state = GameState.Playing;
+                return;
+            }
+            if (key == ConsoleKey.D) {
+                var key2 = Console.ReadKey(true).Key;
+                int idx2 = KeyToIndex(key2);
+                if (idx2 >= 0 && idx2 < inv.Count)
+                    hero.DropItem(idx2, map);
                 return;
             }
             int idx = KeyToIndex(key);
@@ -88,7 +96,7 @@ static class MovementSystem //TODO: Update this name (it's not just the movement
                     DrawPauseScreen(buffer);
                     break;
                 case GameState.Inventory:
-                    DrawInventoryScreen(hero, buffer);
+                    DrawInventoryScreen(hero, buffer, dungeon.CurrentMap());
                     break;
             }
         }
