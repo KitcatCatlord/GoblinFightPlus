@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("GoblinFight+")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+75ee06f26469233845f987854a4c9aac64c56149")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d6853d4ee45799a6c48a86a9361860e74a313fab")]
 [assembly: System.Reflection.AssemblyProductAttribute("GoblinFight+")]
 [assembly: System.Reflection.AssemblyTitleAttribute("GoblinFight+")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/GoblinFight+.csproj": {}
+    "/home/runner/work/GoblinFightPlus/GoblinFightPlus/GoblinFight+.csproj": {}
   },
   "projects": {
-    "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/GoblinFight+.csproj": {
+    "/home/runner/work/GoblinFightPlus/GoblinFightPlus/GoblinFight+.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/GoblinFight+.csproj",
+        "projectUniqueName": "/home/runner/work/GoblinFightPlus/GoblinFightPlus/GoblinFight+.csproj",
         "projectName": "GoblinFight+",
-        "projectPath": "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/GoblinFight+.csproj",
-        "packagesPath": "/Users/kianconti/.nuget/packages/",
-        "outputPath": "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/obj/",
+        "projectPath": "/home/runner/work/GoblinFightPlus/GoblinFightPlus/GoblinFight+.csproj",
+        "packagesPath": "/home/runner/.nuget/packages/",
+        "outputPath": "/home/runner/work/GoblinFightPlus/GoblinFightPlus/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/kianconti/.nuget/NuGet/NuGet.Config"
+          "/home/runner/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -39,11 +38,19 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "10.0.100"
       },
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.NET.ILLink.Tasks": {
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.11, )",
+              "autoReferenced": true
+            }
+          },
           "imports": [
             "net461",
             "net462",
@@ -55,12 +62,31 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.win-x64",
+              "version": "[9.0.11, 9.0.11]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.win-x64",
+              "version": "[9.0.11, 9.0.11]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.305/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/share/dotnet/sdk/10.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "win-x64": {
+          "#import": []
         }
       }
     }

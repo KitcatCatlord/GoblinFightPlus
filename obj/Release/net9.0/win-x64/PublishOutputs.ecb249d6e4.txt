@@ -1,0 +1,2 @@
+/home/runner/work/GoblinFightPlus/GoblinFightPlus/bin/Release/net9.0/win-x64/publish/GoblinFight+.pdb
+/home/runner/work/GoblinFightPlus/GoblinFightPlus/bin/Release/net9.0/win-x64/publish/GoblinFight+.exe

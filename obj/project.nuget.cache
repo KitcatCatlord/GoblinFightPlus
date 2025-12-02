@@ -1,8 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "qz3bJuY8+lQ=",
+  "dgSpecHash": "nByobMl2leA=",
   "success": true,
-  "projectFilePath": "/Users/kianconti/dev/School/Williams/LargeScale/GoblinFight+/GoblinFight+.csproj",
-  "expectedPackageFiles": [],
+  "projectFilePath": "/home/runner/work/GoblinFightPlus/GoblinFightPlus/GoblinFight+.csproj",
+  "expectedPackageFiles": [
+    "/home/runner/.nuget/packages/microsoft.net.illink.tasks/9.0.11/microsoft.net.illink.tasks.9.0.11.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.netcore.app.runtime.win-x64/9.0.11/microsoft.netcore.app.runtime.win-x64.9.0.11.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.aspnetcore.app.runtime.win-x64/9.0.11/microsoft.aspnetcore.app.runtime.win-x64.9.0.11.nupkg.sha512",
+    "/home/runner/.nuget/packages/microsoft.netcore.app.host.win-x64/9.0.11/microsoft.netcore.app.host.win-x64.9.0.11.nupkg.sha512"
+  ],
   "logs": []
 }
