@@ -13,7 +13,7 @@ public static class ConsoleRenderer
         width = Console.WindowWidth - 2;
         height = Console.WindowHeight;
 
-        if (OperatingSystem.IsWindows()) Console.SetBufferSize(width, height);
+        // if (OperatingSystem.IsWindows()) Console.SetBufferSize(width, height); // This is a test, it may not fix the crash (issue #1)
     }
 
     public static char[,] CreateBuffer()
