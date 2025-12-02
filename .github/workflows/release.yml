@@ -25,12 +25,12 @@ jobs:
         run: dotnet restore
 
       - name: Build and publish Windows executable
-        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
+        run: dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishTrimmed=true -o ./publish
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: ./publish/GoblinFight+.exe
+          files: ./publish/*.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
